@@ -1,0 +1,19 @@
+#!/usr/bin/bpftrace
+#include <linux/socket.h>
+#include <net/sock.h>
+#include <linux/tls.h>
+
+
+tracepoint:syscalls:sys_enter_setsockopt { 
+  if (args->level==0x11A){
+    $val=((struct tls12_crypto_info_aes_gcm_128*)args->optval);
+    printf("%s\n",comm);
+    if($val->info.cipher_type==51){
+      printf("\talg:AES_GCM_128\n");
+      printf("\tkey:[%r]\n",buf($val->key,16));
+      printf("\tsalt:[%r]\n",buf($val->salt,4));
+      printf("\treqsec:[%r]\n",buf($val->rec_seq,8));
+    }
+  }
+}
+
